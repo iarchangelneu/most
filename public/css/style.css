@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.cdnfonts.com/css/foglihtenno06');
+
+@font-face {
+    font-family: 'HitchHike';
+    src: url('/fonts/Hitch-hike.otf') format('opentype');
+
+}
+
+@font-face {
+    font-family: 'Tkachenko Sketch 4F';
+    src: url('/fonts/TkachenkoSketch4F-Regular.otf') format('opentype');
+
+}
+
+:root {
+    --int: 'Inter', sans-serif;
+    --fog: 'FoglihtenNo06', sans-serif;
+    --hit: 'HitchHike', sans-serif;
+    --tka: 'Tkachenko Sketch 4F', sans-serif;
+
+}
+
+body {
+    overflow-x: hidden;
+    background: #1E1E1E;
+}
+
+body::-webkit-scrollbar {
+    width: 0;
+}
+
+html {
+    scroll-behavior: smooth !important;
+
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.ql-toolbar.ql-snow {
+    border: 1px solid #f00;
+}
