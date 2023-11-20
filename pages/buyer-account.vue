@@ -2,7 +2,8 @@
     <div class="page">
         <div class="username">
             <img src="@/assets/img/username.svg" alt="">
-            <h1>USERNAME2020@GMAIL.COM</h1>
+            <div v-if="account.length <= 0"></div>
+            <h1 v-else>{{ account.user.first_name }}</h1>
         </div>
 
         <div class="account">
@@ -21,119 +22,10 @@
                 </NuxtLink>
             </div>
             <div class="orders" v-if="selectedTab == 1 && test">
-                <div class="order">
+                <div class="order" v-for="item in buys" :key="item.id">
                     <div class="order__items">
-                        <div class="item">
-                            <img src="@/assets/img/order.png" alt="">
-                        </div>
-                        <div class="item">
-                            <img src="@/assets/img/order.png" alt="">
-                        </div>
 
-                        <div class="item">
-                            <img src="@/assets/img/order.png" alt="">
-                        </div>
-                        <div class="item">
-                            <img src="@/assets/img/order.png" alt="">
-                        </div>
-                        <div class="item">
-                            <img src="@/assets/img/order.png" alt="">
-                        </div>
-
-                    </div>
-
-                    <div class="order__details">
-                        <span>10 ТОВАРОВ</span>
-                        <span>154 896 ₸</span>
-                        <span>23.08.2023</span>
-                    </div>
-                </div>
-                <div class="order">
-                    <div class="order__items">
-                        <div class="item">
-                            <img src="@/assets/img/order.png" alt="">
-                        </div>
-                        <div class="item">
-                            <img src="@/assets/img/order.png" alt="">
-                        </div>
-                        <div class="item">
-                            <img src="@/assets/img/order.png" alt="">
-                        </div>
-                        <div class="item">
-                            <img src="@/assets/img/order.png" alt="">
-                        </div>
-                        <div class="item">
-                            <img src="@/assets/img/order.png" alt="">
-                        </div>
-
-
-                    </div>
-
-                    <div class="order__details">
-                        <span>10 ТОВАРОВ</span>
-                        <span>154 896 ₸</span>
-                        <span>23.08.2023</span>
-                    </div>
-                </div>
-                <div class="order">
-                    <div class="order__items">
-                        <div class="item">
-                            <img src="@/assets/img/order.png" alt="">
-                        </div>
-                        <div class="item">
-                            <img src="@/assets/img/order.png" alt="">
-                        </div>
-                        <div class="item">
-                            <img src="@/assets/img/order.png" alt="">
-                        </div>
-
-                    </div>
-
-                    <div class="order__details">
-                        <span>10 ТОВАРОВ</span>
-                        <span>154 896 ₸</span>
-                        <span>23.08.2023</span>
-                    </div>
-                </div>
-                <div class="order">
-                    <div class="order__items">
-                        <div class="item">
-                            <img src="@/assets/img/order.png" alt="">
-                        </div>
-
-
-                    </div>
-
-                    <div class="order__details">
-                        <span>10 ТОВАРОВ</span>
-                        <span>154 896 ₸</span>
-                        <span>23.08.2023</span>
-                    </div>
-                </div>
-                <div class="order">
-                    <div class="order__items">
-                        <div class="item">
-                            <img src="@/assets/img/order.png" alt="">
-                        </div>
-                        <div class="item">
-                            <img src="@/assets/img/order.png" alt="">
-                        </div>
-                        <div class="item">
-                            <img src="@/assets/img/order.png" alt="">
-                        </div>
-
-
-                    </div>
-
-                    <div class="order__details">
-                        <span>10 ТОВАРОВ</span>
-                        <span>154 896 ₸</span>
-                        <span>23.08.2023</span>
-                    </div>
-                </div>
-                <div class="order">
-                    <div class="order__items">
-                        <div class="item">
+                        <div class="item" v-for="product in item.buyer_sales">
                             <img src="@/assets/img/order.png" alt="">
                         </div>
 
@@ -147,7 +39,7 @@
                 </div>
             </div>
 
-            <TheTransactions v-if="selectedTab == 2"></TheTransactions>
+            <TheTransactions v-if="selectedTab == 2" :transactions="transactions"></TheTransactions>
 
 
             <div class="settings" v-if="selectedTab == 3">
@@ -170,7 +62,7 @@
 
                         <div class="buttons">
                             <button>сохранить</button>
-                            <button>Выйти</button>
+                            <button @click="logOut()">Выйти</button>
                         </div>
                     </div>
                 </div>
@@ -179,11 +71,53 @@
     </div>
 </template>
 <script>
+import global from '~/mixins/global';
+import axios from 'axios';
 export default {
+    mixins: [global],
     data() {
         return {
             selectedTab: 1,
             test: true,
+            pathUrl: 'https://mostshop.kz',
+            seller: [],
+            buys: [],
+            transactions: [],
+            account: [],
+        }
+
+    },
+    methods: {
+        formatDate(dateString) {
+            const date = new Date(dateString);
+            const formattedDate = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`;
+            return formattedDate;
+        },
+        getAccount() {
+            const token = this.getAuthorizationCookie()
+            const path = `${this.pathUrl}/api/buyer/buyer-lk`;
+            axios.defaults.headers.common['Authorization'] = `Token ${token}`;
+            axios
+                .get(path)
+                .then(response => {
+                    this.account = response.data
+                    this.myId = response.data.id
+                    this.transactions = response.data.transactions
+                    this.email = response.data.user.email
+                    this.buys = response.data.my_purchases
+
+                })
+                .catch(error => console.log(error));
+        },
+    },
+    mounted() {
+        const accType = localStorage.getItem('accountType')
+        console.log(accType)
+        if (accType == 'buyer-account') {
+            this.getAccount()
+        }
+        else {
+            window.location.href = '/login'
         }
     }
 }

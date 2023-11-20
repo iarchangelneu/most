@@ -20,12 +20,13 @@
                 <div class="inputs">
                     <div>
                         <label for="email">электронная почта</label>
-                        <input type="email" id="email" name="email">
+                        <input type="email" id="email" name="email" v-model="email">
                     </div>
                     <div>
                         <label for="password">пАРОЛЬ</label>
                         <img src="@/assets/img/eye.svg" alt="" @click="togglePasswordVisibility('password')" />
-                        <input :type="showPassword ? 'text' : 'password'" id="password" name="password" />
+                        <input :type="showPassword ? 'text' : 'password'" id="password" name="password"
+                            v-model="password" />
                     </div>
                     <div>
                         <label for="password-repeat">повторите пароль</label>
@@ -33,15 +34,15 @@
                         <input :type="showPasswordRepeat ? 'text' : 'password'" id="password-repeat"
                             name="password-repeat" />
                     </div>
-                    <div v-if="type == 'seller'">
+                    <div>
                         <label for="name">оТОБРАЖАЕМОЕ ИМЯ</label>
-                        <input type="text">
+                        <input type="text" v-model="name">
                     </div>
                 </div>
 
                 <div class="complete text-center">
-                    <button>регистрация</button>
-
+                    <button @click="register()" ref="login">регистрация</button>
+                    <small class="error d-block">{{ error }}</small>
                     <span>Уже с нами? <NuxtLink to="/login">Войти</NuxtLink> </span>
                 </div>
             </div>
@@ -49,15 +50,65 @@
     </div>
 </template>
 <script>
+import global from '~/mixins/global';
+import axios from 'axios';
 export default {
+    mixins: [global],
     data() {
         return {
             type: 'seller',
             showPassword: false,
             showPasswordRepeat: false,
+            pathUrl: 'https://mostshop.kz',
+            name: '',
+            password: '',
+            email: '',
+            error: '',
         }
     },
     methods: {
+        register() {
+            const buyer = `${this.pathUrl}/api/main/registration/buyer`
+            const seller = `${this.pathUrl}/api/main/registration/seller`
+            const csrf = this.getCSRFToken()
+            const ref = this.$refs
+
+            this.error = ''
+
+            if (this.type == 'seller') {
+                ref.login.innerHTML = 'Входим'
+                axios.defaults.headers.common['X-CSRFToken'] = csrf;
+                axios
+                    .post(seller, { first_name: this.name, password: this.password, username: this.email, email: this.email })
+                    .then((res) => {
+
+                        document.cookie = `Authorization=${res.data.token}; expires=Fri, 31 Dec 2023 23:59:59 GMT; path=/`;
+                        console.log(res)
+                        localStorage.setItem('accountType', res.data.redirect_url)
+                        window.location.href = res.data.redirect_url
+                    })
+                    .catch((error) => {
+                        this.error = error.response.data.username[0]
+                        console.log(error);
+                    });
+            }
+            else {
+                ref.login.innerHTML = 'Входим'
+                axios.defaults.headers.common['X-CSRFToken'] = csrf;
+                axios
+                    .post(buyer, { first_name: this.name, email: this.email, password: this.password, username: this.email })
+                    .then((res) => {
+
+                        document.cookie = `Authorization=${res.data.token}; expires=Fri, 31 Dec 2023 23:59:59 GMT; path=/`;
+                        console.log(res)
+                        localStorage.setItem('accountType', res.data.redirect_url)
+                        window.location.href = '/'
+                    })
+                    .catch((error) => {
+                        this.error = error.response.data.username[0]
+                    });
+            }
+        },
         togglePasswordVisibility(field) {
             if (field === 'password') {
                 this.showPassword = !this.showPassword;
@@ -65,6 +116,18 @@ export default {
                 this.showPasswordRepeat = !this.showPasswordRepeat;
             }
         },
+    },
+    mounted() {
+        const accType = localStorage.getItem('accountType')
+        if (accType == 'buyer-account') {
+            window.location.href = '/buyer-account'
+        }
+        else if (accType == 'seller-account') {
+            window.location.href = '/seller-account'
+        }
+        else {
+            console.log('not authorized')
+        }
     }
 }
 </script>
@@ -84,6 +147,12 @@ useSeoMeta({
 
     @media (max-width: 1600px) {
         height: auto;
+    }
+
+    .error {
+        color: red;
+        font-size: 14px;
+        font-family: var(--int);
     }
 
     .form {

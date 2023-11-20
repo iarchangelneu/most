@@ -1,7 +1,7 @@
 <template>
     <div class="page">
         <div class="form">
-            <div class="links">
+            <div class="links" v-if="accountType == 'buyer'">
                 <NuxtLink to="/withdrawal">
                     вывод
                 </NuxtLink>
@@ -28,7 +28,7 @@
 
                 <div class="complete">
                     <input type="number" v-model="cost">
-                    <button>пополнить</button>
+                    <button ref="inBtn" @click="inMoney">пополнить</button>
                 </div>
 
                 <div class="selects">
@@ -48,16 +48,63 @@
     </div>
 </template>
 <script>
+import global from '~/mixins/global';
+import axios from 'axios'
 export default {
+    mixins: [global],
     data() {
         return {
             cost: null,
+            pathUrl: 'https://mostshop.kz',
+            accountType: '',
         }
     },
     methods: {
+        inMoney() {
+            const token = this.getAuthorizationCookie()
+            const csrf = this.getCSRFToken()
+            const path = `${this.pathUrl}/api/money/new-pay`
+            axios.defaults.headers.common['Authorization'] = `Token ${token}`;
+            axios.defaults.headers.common['X-CSRFToken'] = csrf;
+            this.$refs.inBtn.innerHTML = 'ОЖИДАЙТЕ'
 
+            axios
+                .post(path, {
+                    amount: this.cost
+                })
+                .then(response => {
+                    console.log(response)
+                    window.location.href = response.data.url
+                    if (response.status = 201) {
+                        this.$refs.inBtn.innerHTML = 'ПОПОЛНИТЬ'
+                    }
+                    if (response.status == 228) {
+                        this.$refs.outBtn.innerHTML = response.data.error_msg
+                    }
+                })
+                .catch(error => {
+                    console.error(error)
+                    this.$refs.inBtn.innerHTML = 'ПОПОЛНИТЬ'
+                })
+        },
     },
+    mounted() {
+        const accType = localStorage.getItem('accountType')
+        if (accType !== 'buyer-account' && accType !== 'seller-account') {
+            window.location.href = '/login'
+        }
+        if (accType == 'buyer-account') {
+            this.accountType = 'buyer'
 
+        }
+        else if (accType == 'seller-account') {
+            this.accountType = 'seller'
+        }
+        else {
+            return
+        }
+
+    }
 }
 </script>
 <script setup>

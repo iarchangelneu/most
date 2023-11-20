@@ -9,7 +9,7 @@
                 <div class="filters__body">
                     <div class="input-group">
                         <input type="text" class="form-control" placeholder="Искать..." aria-label="search"
-                            aria-describedby="basic-addon1">
+                            aria-describedby="basic-addon1" v-model="search" @input="searchProducts">
                         <div class="input-group-prepend">
                             <span class="input-group-text" id="basic-addon1"><img src="@/assets/img/search.svg"
                                     alt=""></span>
@@ -21,13 +21,15 @@
                         <button @click.stop="toggleSort">СОРТИРОВАТЬ</button>
 
                         <div class="sort__body" @click="stopPropagation" :class="{ active: sort }">
-                            <span @click="selectedSort = 1, closeSort()" :class="{ spanActive: selectedSort == 1 }">Сначала
+                            <span @click="selectedSort = 1, sortBy('price')"
+                                :class="{ spanActive: selectedSort == 1 }">Сначала
                                 дешевле</span>
-                            <span @click="selectedSort = 2, closeSort()" :class="{ spanActive: selectedSort == 2 }">Сначала
+                            <span @click="selectedSort = 2, sortBy('-price')"
+                                :class="{ spanActive: selectedSort == 2 }">Сначала
                                 дороже</span>
-                            <span @click="selectedSort = 3, closeSort()"
+                            <span @click="selectedSort = 3, sortBy('discount')"
                                 :class="{ spanActive: selectedSort == 3 }">Популярное</span>
-                            <span @click="selectedSort = 4, closeSort()"
+                            <span @click="selectedSort = 4, sortBy('-discount')"
                                 :class="{ spanActive: selectedSort == 4 }">Новинки</span>
                         </div>
 
@@ -36,33 +38,14 @@
                                 <h2>предмет:</h2>
 
                                 <div class="items__check">
-                                    <label class="custom-checkbox">
+                                    <label class="custom-checkbox" @click="getCatalog()">
                                         <input type="checkbox">
                                         <p class="checkbox-text m-0">Все</p>
                                     </label>
-                                    <label class="custom-checkbox">
-                                        <input type="checkbox">
-                                        <p class="checkbox-text m-0">Верх</p>
-                                    </label>
-                                    <label class="custom-checkbox">
-                                        <input type="checkbox">
-                                        <p class="checkbox-text m-0">Низ</p>
-                                    </label>
-                                    <label class="custom-checkbox">
-                                        <input type="checkbox">
-                                        <p class="checkbox-text m-0">Аксессуары</p>
-                                    </label>
-                                    <label class="custom-checkbox">
-                                        <input type="checkbox">
-                                        <p class="checkbox-text m-0">Головные уборы</p>
-                                    </label>
-                                    <label class="custom-checkbox">
-                                        <input type="checkbox">
-                                        <p class="checkbox-text m-0">Обувь</p>
-                                    </label>
-                                    <label class="custom-checkbox">
-                                        <input type="checkbox">
-                                        <p class="checkbox-text m-0">Костюм</p>
+                                    <label class="custom-checkbox" v-for="(category, index) in categories" :key="index">
+                                        <input type="checkbox" :value="index + 1" v-model="selectedCategories"
+                                            @change="applyFilters">
+                                        <p class="checkbox-text m-0">{{ category }}</p>
                                     </label>
                                 </div>
                             </div>
@@ -71,7 +54,7 @@
                                 <div class="price__input">
                                     <div class="input-group">
                                         <input type="number" class="form-control" placeholder="От" aria-label="from"
-                                            aria-describedby="basic-addon1">
+                                            aria-describedby="basic-addon1" v-model="minPrice" @input="applyFilters">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text" id="basic-addon1">₸</span>
                                         </div>
@@ -81,7 +64,7 @@
 
                                     <div class="input-group">
                                         <input type="number" class="form-control" placeholder="До" aria-label="to"
-                                            aria-describedby="basic-addon1">
+                                            aria-describedby="basic-addon1" v-model="maxPrice" @input="applyFilters">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text" id="basic-addon1">₸</span>
                                         </div>
@@ -95,94 +78,31 @@
 
 
             <div class="catalog">
-                <NuxtLink :to="'/product/' + 1" class="catalog__item">
+                <NuxtLink v-for="item in catalog.results" :to="'/product/' + item.id" :key="item.id" class="catalog__item">
                     <div class="img">
                         <div class="item__adv">
                             <div class="buttons">
-                                <img src="@/assets/img/addcart.svg" alt="">
-                                <img src="@/assets/img/addfav.svg" alt="">
+                                <button @click.prevent="addToCart(item.id, item.size.split(',')[0])">
+                                    <img src="@/assets/img/addcart.svg" alt="">
+                                </button>
+                                <button @click.prevent="addFav(item.id, item.size.split(',')[0])">
+                                    <img src="@/assets/img/addfav.svg" alt="">
+                                </button>
                             </div>
                         </div>
-                        <img src="@/assets/img/pop1.png" alt="">
+                        <img src="" alt="">
+                        <!-- <img :src="item.add_image[0].image" alt=""> -->
                     </div>
-                    <p>Джинсы «Fases»</p>
+                    <p>{{ item.name }}</p>
 
                     <div class="text-right">
-                        <span> 34 555 ₸</span>
-                    </div>
-                </NuxtLink>
-                <NuxtLink :to="'/product/' + 1" class="catalog__item">
-                    <div class="img">
-                        <div class="item__adv">
-                            <div class="buttons">
-                                <img src="@/assets/img/addcart.svg" alt="">
-                                <img src="@/assets/img/addfav.svg" alt="">
-                            </div>
-                        </div>
-                        <img src="@/assets/img/pop2.png" alt="">
-                    </div>
-
-                    <p>Кроссовки «Say Yes»</p>
-
-                    <div class="text-right">
-                        <span> 57 999 ₸</span>
-                    </div>
-                </NuxtLink>
-                <NuxtLink :to="'/product/' + 1" class="catalog__item">
-                    <div class="img">
-                        <div class="item__adv">
-                            <div class="buttons">
-                                <img src="@/assets/img/addcart.svg" alt="">
-                                <img src="@/assets/img/addfav.svg" alt="">
-                            </div>
-                        </div>
-                        <img src="@/assets/img/pop3.png" alt="">
-                    </div>
-
-                    <p>Куртка «JO»</p>
-
-                    <div class="text-right">
-                        <span> 122 940 ₸</span>
-                    </div>
-                </NuxtLink>
-                <NuxtLink :to="'/product/' + 1" class="catalog__item">
-                    <div class="img">
-                        <div class="item__adv">
-                            <div class="buttons">
-                                <img src="@/assets/img/addcart.svg" alt="">
-                                <img src="@/assets/img/addfav.svg" alt="">
-                            </div>
-                        </div>
-                        <img src="@/assets/img/pop4.png" alt="">
-                    </div>
-
-                    <p>Топ «KRASIVO»</p>
-
-                    <div class="text-right">
-                        <span> 31 550 ₸</span>
-                    </div>
-                </NuxtLink>
-                <NuxtLink :to="'/product/' + 1" class="catalog__item">
-                    <div class="img">
-                        <div class="item__adv">
-                            <div class="buttons">
-                                <img src="@/assets/img/addcart.svg" alt="">
-                                <img src="@/assets/img/addfav.svg" alt="">
-                            </div>
-                        </div>
-                        <img src="@/assets/img/pop5.png" alt="">
-                    </div>
-
-                    <p>Рубашка «Art»</p>
-
-                    <div class="text-right">
-                        <span> 18 370 ₸</span>
+                        <span> {{ item.price.toLocaleString() }} ₸</span>
                     </div>
                 </NuxtLink>
             </div>
 
 
-            <div class="showmore">
+            <div class="showmore" @click="loadMoreProducts">
                 <img src="@/assets/img/showmore.svg" class="shmr" alt="">
                 <button ref="showmore">Показать<br> еще</button>
                 <img src="@/assets/img/showmorearr.svg" alt="">
@@ -191,15 +111,115 @@
     </div>
 </template>
 <script>
+import global from '~/mixins/global';
+import axios from 'axios';
 export default {
+    mixins: [global],
     data() {
         return {
             filter: false,
             sort: false,
             selectedSort: 0,
+            pathUrl: "https://mostshop.kz",
+            catalog: [],
+            search: '',
+            minPrice: null,
+            maxPrice: null,
+            selectedCategories: [],
+            categories: ['Верх', 'Низ', 'Аксессуары', 'Головные уборы', 'Обувь', 'Костюм'],
         }
     },
     methods: {
+        applyFilters() {
+            const params = new URLSearchParams();
+            if (this.minPrice !== null) {
+                params.append('price__gte', this.minPrice);
+            }
+            if (this.maxPrice !== null) {
+                params.append('price__lte', this.maxPrice);
+            }
+
+            if (this.selectedCategories.length > 0) {
+                params.append('category__in', this.selectedCategories.join(','));
+            }
+
+            this.fetchFilteredProducts(params);
+        },
+        fetchFilteredProducts(params) {
+            const path = `${this.pathUrl}/api/products/all-product?${params.toString()}`;
+            axios
+                .get(path)
+                .then(response => {
+                    this.catalog = response.data;
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        },
+        searchProducts() {
+            const query = this.search.trim();
+            if (query) {
+                const queryParams = `?search=${query}`;
+                this.fetchSearchResults(queryParams);
+            } else {
+                this.getCatalog();
+            }
+        },
+        fetchSearchResults(queryParams) {
+            const path = `${this.pathUrl}/api/products/all-product${queryParams}`;
+            axios
+                .get(path)
+                .then(response => {
+                    this.catalog = response.data;
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        },
+        sortBy(ordering) {
+            this.sort = false
+            const path = `${this.pathUrl}/api/products/all-product?ordering=${ordering}`;
+            axios
+                .get(path)
+                .then(response => {
+                    this.catalog = response.data;
+
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        },
+        getCatalog() {
+            const queryParams = new URLSearchParams(window.location.search);
+            let url = `${this.pathUrl}/api/products/all-product`;
+
+            axios
+                .get(url)
+                .then(response => {
+                    this.catalog = response.data;
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        },
+        loadMoreProducts() {
+            if (this.catalog.next) {
+                this.$refs.showmore.innerHTML = 'Загружаем'
+                axios
+                    .get(this.catalog.next)
+                    .then(response => {
+                        this.$refs.showmore.innerHTML = 'Показать еще'
+                        this.catalog.results.push(...response.data.results);
+                        this.catalog.next = response.data.next;
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            }
+            else {
+                this.$refs.showmore.innerHTML = 'Пусто(;'
+            }
+        },
         toggleFilter() {
             this.filter = !this.filter;
 
@@ -228,6 +248,9 @@ export default {
         stopPropagation(event) {
             event.stopPropagation();
         },
+    },
+    mounted() {
+        this.getCatalog()
     }
 }
 </script>
@@ -259,6 +282,10 @@ useSeoMeta({
         margin-top: 100px;
         cursor: pointer;
 
+        @media (max-width: 1024px) {
+            margin-bottom: 40px;
+        }
+
         .shmr {
             position: absolute;
         }
@@ -274,6 +301,10 @@ useSeoMeta({
             text-transform: uppercase;
             font-family: var(--int);
             color: #fff;
+
+            @media (max-width: 1024px) {
+                font-size: 14px;
+            }
         }
     }
 
@@ -327,9 +358,16 @@ useSeoMeta({
                         gap: 20px;
                     }
 
+                    button {
+                        background: transparent;
+                        border: 0;
+                    }
+
                     img {
                         width: 60px;
                         height: 50px;
+                        cursor: progress;
+                        z-index: 10;
                     }
                 }
             }

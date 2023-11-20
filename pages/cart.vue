@@ -1,11 +1,11 @@
 <template>
     <div class="page">
         <prevPage></prevPage>
-        <div class="empty" v-if="!test">
+        <div class="empty" v-if="cart.length <= 0">
             <h1>Хэй, тут ничего. Оформим покупку?</h1>
 
             <div class="next">
-                <NuxtLink to="/complete-order">
+                <NuxtLink to="/catalog">
                     <img src="@/assets/img/nextbg.svg" class="bg" alt="">
                     В каталог
                     <img src="@/assets/img/next.svg" alt="">
@@ -14,7 +14,7 @@
         </div>
         <div v-else>
             <div class="cart">
-                <div class="cart__item">
+                <div class="cart__item" v-for="item in cart" :key="item.id">
 
                     <div class="img">
                         <img src="@/assets/img/cart.png" alt="">
@@ -23,77 +23,27 @@
                     <div class="item__info">
                         <div class="name">
                             <h2>Джинсы «Fases»</h2>
-                            <span>34 555 ₸</span>
-                            <small>S</small>
+                            <span>{{ (item.products.price * item.amount).toLocaleString() }} ₸</span>
+                            <small>{{ item.size }}</small>
                         </div>
 
                         <div class="actions">
-                            <p>S</p>
+                            <p>{{ item.size }}</p>
                             <div class="counter">
-                                <small>-</small>
-                                <span>1</span>
-                                <small>+</small>
+                                <small @click="decreaseAmount(item.id)">-</small>
+                                <span>{{ item.amount }}</span>
+                                <small @click="increaseAmount(item.id)">+</small>
                             </div>
 
-                            <img src="@/assets/img/trash.svg" alt="">
+                            <img src="@/assets/img/trash.svg" @click="deleteFromCart(item.id)" alt="">
                         </div>
                     </div>
                 </div>
 
-                <div class="cart__item">
-
-                    <div class="img">
-                        <img src="@/assets/img/cart.png" alt="">
-                    </div>
-
-                    <div class="item__info">
-                        <div class="name">
-                            <h2>Кроссовки «Say Yes»</h2>
-                            <span>34 555 ₸</span>
-                            <small>S</small>
-                        </div>
-
-                        <div class="actions">
-                            <p>S</p>
-                            <div class="counter">
-                                <small>-</small>
-                                <span>1</span>
-                                <small>+</small>
-                            </div>
-
-                            <img src="@/assets/img/trash.svg" alt="">
-                        </div>
-                    </div>
-                </div>
-                <div class="cart__item">
-
-                    <div class="img">
-                        <img src="@/assets/img/cart.png" alt="">
-                    </div>
-
-                    <div class="item__info">
-                        <div class="name">
-                            <h2>Топ «KRASIVO»</h2>
-                            <span>34 555 ₸</span>
-                            <small>S</small>
-                        </div>
-
-                        <div class="actions">
-                            <p>S</p>
-                            <div class="counter">
-                                <small>-</small>
-                                <span>1</span>
-                                <small>+</small>
-                            </div>
-
-                            <img src="@/assets/img/trash.svg" alt="">
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <div class="total">
-                <h2>Итого: 124 104 ₸ </h2>
+                <h2>Итого: {{ formatPrice(calculateTotal()) }} ₸ </h2>
             </div>
 
 
@@ -109,11 +59,84 @@
     </div>
 </template>
 <script>
+import global from '~/mixins/global';
+import axios from 'axios'
 export default {
+    mixins: [global],
     data() {
         return {
             test: false,
+            cart: [],
+            pathUrl: 'https://mostshop.kz',
         }
+    },
+    methods: {
+        decreaseAmount(itemId) {
+            const item = this.cart.find(item => item.id === itemId);
+            if (item && item.amount > 0) {
+                item.amount--;
+
+                // Используем Vue.nextTick() для обновления данных после изменения
+                this.$nextTick(() => {
+                    if (item.amount <= 0) {
+                        this.deleteFromCart(itemId);
+                    }
+                });
+            }
+        },
+        increaseAmount(itemId) {
+            const item = this.cart.find(item => item.id === itemId);
+            if (item) {
+                item.amount++;
+            }
+        },
+        calculateTotal() {
+            let total = 0;
+
+            this.cart.forEach(item => {
+                const { price, discount } = item.products;
+                const discountedPrice = price * (1 - discount / 100);
+                total += discountedPrice * item.amount;
+            });
+
+            return total;
+        },
+        formatPrice(price) {
+            return Math.floor(price).toLocaleString();
+        },
+        deleteFromCart(id) {
+            const token = this.getAuthorizationCookie()
+            const csrf = this.getCSRFToken()
+            const path = `${this.pathUrl}/api/buyer/delete-product-basket/${id}`
+            axios.defaults.headers.common['Authorization'] = `Token ${token}`;
+            axios.defaults.headers.common['X-CSRFToken'] = csrf;
+            axios
+                .put(path)
+                .then(response => {
+                    console.log(response)
+                    this.getCart()
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+        },
+        getCart() {
+            const token = this.getAuthorizationCookie()
+            const path = `${this.pathUrl}/api/buyer/all-product-basket`;
+            axios.defaults.headers.common['Authorization'] = `Token ${token}`;
+
+            axios
+                .get(path)
+                .then(response => {
+                    this.cart = response.data
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+        },
+    },
+    mounted() {
+        this.getCart()
     }
 }
 </script>

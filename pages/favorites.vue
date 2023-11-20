@@ -16,99 +16,60 @@
         <div v-else>
             <div class="catalog__body">
                 <div class="catalog">
-                    <NuxtLink :to="'/product/' + 1" class="catalog__item">
+                    <NuxtLink v-for="item in favs" :to="'/product/' + item.id" :key="item.id" class="catalog__item">
                         <div class="img">
                             <div class="item__adv">
                                 <div class="buttons">
-                                    <img src="@/assets/img/addcart.svg" alt="">
-                                    <img src="@/assets/img/addedfav.svg" alt="">
+                                    <button @click.prevent="addFav(item.product.id, item.size.split(',')[0])">
+                                        <img src="@/assets/img/addcart.svg" alt="">
+                                    </button>
+                                    <button @click.prevent="addFav(item.product.id, item.size.split(',')[0])">
+                                        <img src="@/assets/img/addedfav.svg" alt="">
+                                    </button>
                                 </div>
                             </div>
-                            <img src="@/assets/img/pop1.png" alt="">
+                            <img :src="item.product.add_image[0].image" alt="">
                         </div>
-                        <p>Джинсы «Fases»</p>
+                        <p>{{ item.product.name }}</p>
 
                         <div class="text-right">
-                            <span> 34 555 ₸</span>
+                            <span> {{ item.product.price.toLocaleString() }} ₸</span>
                         </div>
                     </NuxtLink>
-                    <NuxtLink :to="'/product/' + 1" class="catalog__item">
-                        <div class="img">
-                            <div class="item__adv">
-                                <div class="buttons">
-                                    <img src="@/assets/img/addcart.svg" alt="">
-                                    <img src="@/assets/img/addedfav.svg" alt="">
-                                </div>
-                            </div>
-                            <img src="@/assets/img/pop1.png" alt="">
-                        </div>
-                        <p>Джинсы «Fases»</p>
-
-                        <div class="text-right">
-                            <span> 34 555 ₸</span>
-                        </div>
-                    </NuxtLink>
-                    <NuxtLink :to="'/product/' + 1" class="catalog__item">
-                        <div class="img">
-                            <div class="item__adv">
-                                <div class="buttons">
-                                    <img src="@/assets/img/addcart.svg" alt="">
-                                    <img src="@/assets/img/addedfav.svg" alt="">
-                                </div>
-                            </div>
-                            <img src="@/assets/img/pop1.png" alt="">
-                        </div>
-                        <p>Джинсы «Fases»</p>
-
-                        <div class="text-right">
-                            <span> 34 555 ₸</span>
-                        </div>
-                    </NuxtLink>
-                    <NuxtLink :to="'/product/' + 1" class="catalog__item">
-                        <div class="img">
-                            <div class="item__adv">
-                                <div class="buttons">
-                                    <img src="@/assets/img/addcart.svg" alt="">
-                                    <img src="@/assets/img/addedfav.svg" alt="">
-                                </div>
-                            </div>
-                            <img src="@/assets/img/pop1.png" alt="">
-                        </div>
-                        <p>Джинсы «Fases»</p>
-
-                        <div class="text-right">
-                            <span> 34 555 ₸</span>
-                        </div>
-                    </NuxtLink>
-                    <NuxtLink :to="'/product/' + 1" class="catalog__item">
-                        <div class="img">
-                            <div class="item__adv">
-                                <div class="buttons">
-                                    <img src="@/assets/img/addcart.svg" alt="">
-                                    <img src="@/assets/img/addedfav.svg" alt="">
-                                </div>
-                            </div>
-                            <img src="@/assets/img/pop1.png" alt="">
-                        </div>
-                        <p>Джинсы «Fases»</p>
-
-                        <div class="text-right">
-                            <span> 34 555 ₸</span>
-                        </div>
-                    </NuxtLink>
-
-
                 </div>
             </div>
         </div>
     </div>
 </template>
 <script>
+import global from '~/mixins/global';
+import axios from 'axios'
 export default {
+    mixins: [global],
     data() {
         return {
             test: true,
+            favs: [],
         }
+    },
+    methods: {
+        getFavs() {
+            const token = this.getAuthorizationCookie()
+            const path = `${this.pathUrl}/api/buyer/all-product-favourites`;
+            axios.defaults.headers.common['Authorization'] = `Token ${token}`;
+
+            axios
+                .get(path)
+                .then(response => {
+                    this.favs = response.data
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+        },
+    },
+    mounted() {
+        this.getFavs()
     }
 }
 </script>
@@ -235,6 +196,11 @@ useSeoMeta({
                     .buttons {
                         display: flex;
                         gap: 60px;
+
+                        button {
+                            background: transparent;
+                            border: 0;
+                        }
 
                         @media (max-width:1024px) {
                             gap: 20px;

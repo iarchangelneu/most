@@ -10,49 +10,52 @@
             <img src="@/assets/img/headerlogo.svg" alt="">
         </NuxtLink>
 
-        <div class="options" v-if="test">
+        <NuxtLink to="/register" class="reg" v-if="accountType == ''">
+            ВХОД / РЕГИСТРАЦИЯ
+        </NuxtLink>
+        <div class="options" v-else>
             <NuxtLink to="/withdrawal" class="cash">
                 <img src="@/assets/img/cash.svg" alt="">
-                <span>100 000 ₸ </span>
+                <span>{{ userBalance == null ? '0 ₸' : userBalance.toLocaleString()
+                    + ' ₸' }} </span>
             </NuxtLink>
 
-            <div class="cart" @click.stop="toggleCart()">
+            <div class="cart" @click.stop="toggleCart()" v-if="accountType == 'buyer'">
                 <img src="@/assets/img/cart.svg" alt="">
-                <div class="cart__counter">
-                    <span>10</span>
+                <div class="cart__counter" v-if="cartLength">
+                    <span>{{ cartArray.length }}</span>
                 </div>
             </div>
 
-            <div class="favorites" @click.stop="toggleFavorites()">
+            <div class="favorites" @click.stop="toggleFavorites()" v-if="accountType == 'buyer'">
                 <img src="@/assets/img/fav.svg" alt="">
-                <img src="@/assets/img/favc.svg" alt="" class="fav__checked">
+                <img src="@/assets/img/favc.svg" alt="" v-if="favsLength" class="fav__checked">
             </div>
 
-            <NuxtLink to="/seller-account">
+            <NuxtLink :to="this.accountUrl">
                 <img src="@/assets/img/acc.svg" alt="">
             </NuxtLink>
         </div>
-        <NuxtLink to="/register" class="reg" v-else>
-            ВХОД / РЕГИСТРАЦИЯ
-        </NuxtLink>
+
 
 
         <div class="Menu" :class="{ menuOpen: menuOpen }">
             <div class="menu__options">
-                <div class="options" v-if="test">
+                <div class="options" v-if="accountType !== ''">
                     <NuxtLink to="/withdrawal" class="cash">
                         <img src="@/assets/img/cash.svg" alt="">
-                        <span>100 000 ₸ </span>
+                        <span>{{ userBalance == null ? '0 ₸' : userBalance.toLocaleString()
+                            + ' ₸' }} </span>
                     </NuxtLink>
-                    <NuxtLink to="/seller-account">
+                    <NuxtLink :to="this.accountUrl">
                         <img src="@/assets/img/acc.svg" alt="">
                     </NuxtLink>
                 </div>
-                <div class="options" v-if="test">
+                <div class="options" v-if="accountType == 'buyer'">
                     <div class="cart">
                         <img src="@/assets/img/cart.svg" alt="">
                         <div class="cart__counter">
-                            <span>10</span>
+                            <span>{{ cartArray.length }}</span>
                         </div>
                     </div>
 
@@ -61,7 +64,7 @@
                         <img src="@/assets/img/favc.svg" alt="" class="fav__checked">
                     </div>
                 </div>
-                <NuxtLink to="/register" class="reg mob" v-if="!test">
+                <NuxtLink to="/register" class="reg mob" v-if="accountType == ''">
                     ВХОД / РЕГИСТРАЦИЯ
                 </NuxtLink>
             </div>
@@ -94,12 +97,12 @@
             <div class="cart__header">
                 <div class="name">
                     <h2>Корзина</h2>
-                    <span>(3)</span>
+                    <span>({{ cartArray.length }})</span>
                 </div>
 
                 <img src="@/assets/img/closecart.svg" @click.stop="toggleCart()" alt="">
             </div>
-            <div class="empty" v-if="!test2">
+            <div class="empty" v-if="cartArray.length <= 0">
                 <div class="text-center">
                     <h1>Хэй, тут ничего. Оформим покупку?</h1>
                 </div>
@@ -114,61 +117,22 @@
             <div v-else>
                 <div class="cart__body">
 
-                    <div class="cart__item">
+                    <div class="cart__item" v-for="item in cartArray" :key="item.id">
                         <div class="img">
-                            <img src="@/assets/img/cart1.png" alt="">
+                            <img :src="pathUrl + '/api' + item.products.add_image[0].image" alt="">
                         </div>
                         <div class="item__info">
                             <div class="name">
-                                <h3>Джинсы «Fases»</h3>
-                                <span>34 555 ₸</span>
+                                <h3>{{ item.products.name }}</h3>
+                                <span>{{ item.products.price.toLocaleString() }} ₸</span>
                             </div>
-                            <small>S</small>
+                            <small>{{ item.size }}</small>
                         </div>
                     </div>
-
-                    <div class="cart__item">
-                        <div class="img">
-                            <img src="@/assets/img/cart1.png" alt="">
-                        </div>
-                        <div class="item__info">
-                            <div class="name">
-                                <h3>Джинсы «Fases»</h3>
-                                <span>34 555 ₸</span>
-                            </div>
-                            <small>S</small>
-                        </div>
-                    </div>
-
-                    <div class="cart__item">
-                        <div class="img">
-                            <img src="@/assets/img/cart1.png" alt="">
-                        </div>
-                        <div class="item__info">
-                            <div class="name">
-                                <h3>Джинсы «Fases»</h3>
-                                <span>34 555 ₸</span>
-                            </div>
-                            <small>S</small>
-                        </div>
-                    </div>
-                    <div class="cart__item">
-                        <div class="img">
-                            <img src="@/assets/img/cart1.png" alt="">
-                        </div>
-                        <div class="item__info">
-                            <div class="name">
-                                <h3>Джинсы «Fases»</h3>
-                                <span>34 555 ₸</span>
-                            </div>
-                            <small>S</small>
-                        </div>
-                    </div>
-
                 </div>
 
                 <div class="cart__footer">
-                    <NuxtLink to="/complete-order">
+                    <NuxtLink to="/cart">
                         <img src="@/assets/img/defaultbg.svg" class="bg" alt="">
                         <span>ОФОРМИТЬ</span>
                         <img src="@/assets/img/next.svg">
@@ -182,12 +146,12 @@
             <div class="cart__header">
                 <div class="name">
                     <h2>избранное</h2>
-                    <span>(3)</span>
+                    <span>({{ favs.length }})</span>
                 </div>
 
                 <img src="@/assets/img/closecart.svg" @click.stop="toggleFavorites()" alt="">
             </div>
-            <div class="empty" v-if="!test2">
+            <div class="empty" v-if="favs.length <= 0">
                 <div class="text-center">
                     <h1>а тут пусто</h1>
                 </div>
@@ -202,67 +166,22 @@
             <div v-else>
                 <div class="cart__body">
 
-                    <div class="cart__item">
+                    <div class="cart__item" v-for="item in favs" :key="item.id">
                         <div class="img">
-                            <img src="@/assets/img/cart1.png" alt="">
+                            <img :src="item.product.add_image[0].image" alt="">
                         </div>
                         <div class="item__info">
                             <div class="name">
-                                <h3>Джинсы «Fases»</h3>
-                                <span>34 555 ₸</span>
+                                <h3>{{ item.product.name }}</h3>
+                                <span>{{ item.product.price.toLocaleString() }} ₸</span>
                             </div>
                             <div class="cart__select">
-                                <small>S</small>
-                                <img src="@/assets/img/addcart.svg" alt="">
+                                <small>{{ item.size }}</small>
+                                <img src="@/assets/img/addcart.svg" @click="addToCart(item.product.id, item.size)"
+                                    style="cursor: pointer;" alt="">
                             </div>
                         </div>
                     </div>
-                    <div class="cart__item">
-                        <div class="img">
-                            <img src="@/assets/img/cart1.png" alt="">
-                        </div>
-                        <div class="item__info">
-                            <div class="name">
-                                <h3>Джинсы «Fases»</h3>
-                                <span>34 555 ₸</span>
-                            </div>
-                            <div class="cart__select">
-                                <small>S</small>
-                                <img src="@/assets/img/addcart.svg" alt="">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="cart__item">
-                        <div class="img">
-                            <img src="@/assets/img/cart1.png" alt="">
-                        </div>
-                        <div class="item__info">
-                            <div class="name">
-                                <h3>Джинсы «Fases»</h3>
-                                <span>34 555 ₸</span>
-                            </div>
-                            <div class="cart__select">
-                                <small>S</small>
-                                <img src="@/assets/img/addcart.svg" alt="">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="cart__item">
-                        <div class="img">
-                            <img src="@/assets/img/cart1.png" alt="">
-                        </div>
-                        <div class="item__info">
-                            <div class="name">
-                                <h3>Джинсы «Fases»</h3>
-                                <span>34 555 ₸</span>
-                            </div>
-                            <div class="cart__select">
-                                <small>S</small>
-                                <img src="@/assets/img/addcart.svg" alt="">
-                            </div>
-                        </div>
-                    </div>
-
 
                 </div>
 
@@ -279,7 +198,10 @@
     </header>
 </template>
 <script>
+import global from '~/mixins/global';
+import axios from 'axios'
 export default {
+    mixins: [global],
     data() {
         return {
             menuOpen: false,
@@ -288,6 +210,13 @@ export default {
             test: true,
             test2: true,
             hideHeaderOnPages: ['login', 'register'],
+            pathUrl: 'https://mostshop.kz',
+            cartArray: [],
+            favs: [],
+            cartLength: false,
+            favsLength: false,
+            userBalance: null,
+            accountType: '',
         }
     },
     mounted() {
@@ -299,14 +228,95 @@ export default {
 
             window.addEventListener('mousemove', this.handleMouseMove);
         });
+
+        const accType = localStorage.getItem('accountType')
+        if (accType == 'buyer-account') {
+            this.getBuyer()
+            this.getCart()
+            this.getFavs()
+            this.accountType = 'buyer'
+            setInterval(() => {
+                if (this.cartArray.length > 0) {
+                    this.cartLength = true
+                }
+                else {
+                    this.cartLength = false
+                }
+                if (this.favs.length > 0) {
+                    this.favsLength = true
+                }
+                else {
+                    this.favsLength = false
+                }
+            }, 1);
+        }
+        else if (accType == 'seller-account') {
+            this.getSeller()
+            this.accountType = 'seller'
+        }
+        else {
+            console.log('not authorized')
+        }
     },
     beforeDestroy() {
         window.removeEventListener('mousemove', this.handleMouseMove);
     },
     methods: {
+        getCart() {
+            const token = this.getAuthorizationCookie()
+            const path = `${this.pathUrl}/api/buyer/all-product-basket`;
+            axios.defaults.headers.common['Authorization'] = `Token ${token}`;
+
+            axios
+                .get(path)
+                .then(response => {
+                    this.cartArray = response.data
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+        },
+        getFavs() {
+            const token = this.getAuthorizationCookie()
+            const path = `${this.pathUrl}/api/buyer/all-product-favourites`;
+            axios.defaults.headers.common['Authorization'] = `Token ${token}`;
+
+            axios
+                .get(path)
+                .then(response => {
+                    this.favs = response.data
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+        },
+        getBuyer() {
+            const token = this.getAuthorizationCookie()
+            const path = `${this.pathUrl}/api/buyer/buyer-lk`;
+            axios.defaults.headers.common['Authorization'] = `Token ${token}`;
+            axios
+                .get(path)
+                .then(response => {
+                    this.userBalance = response.data.user.balance
+
+                })
+                .catch(error => console.log(error));
+        },
+        getSeller() {
+            const token = this.getAuthorizationCookie()
+            const path = `${this.pathUrl}/api/seller/seller-lk`;
+            axios.defaults.headers.common['Authorization'] = `Token ${token}`;
+            axios
+                .get(path)
+                .then(response => {
+                    this.userBalance = response.data.user.balance
+
+                })
+                .catch(error => console.log(error));
+        },
         toggleCart() {
             this.cart = !this.cart;
-
+            this.getCart()
             if (this.cart) {
                 document.addEventListener('click', this.closeCart);
             } else {
@@ -319,6 +329,7 @@ export default {
         },
         toggleFavorites() {
             this.favorites = !this.favorites;
+            this.getFavs()
             if (this.favorites) {
                 document.addEventListener('click', this.closeFavorites);
             } else {
@@ -474,9 +485,13 @@ export default {
             .item__info {
                 display: flex;
                 flex-direction: column;
-                height: 100%;
+                height: 142px;
                 justify-content: space-between;
                 align-items: flex-start;
+
+                @media (max-width: 1024px) {
+                    height: 102px;
+                }
 
                 .cart__select {
                     display: flex;
@@ -514,6 +529,11 @@ export default {
 
                     padding: 10px 30px;
                     border: 1px solid #f00;
+
+                    @media (max-width: 1024px) {
+                        padding: 10px;
+                        font-size: 12px;
+                    }
                 }
             }
         }
@@ -635,12 +655,13 @@ header {
                         height: 17px;
                         border: 1px solid #fff;
                         text-align: center;
-
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
 
                         span {
-                            position: absolute;
-                            top: -10%;
-                            left: 25%;
+                            text-align: center;
                             font-size: 16px;
                             font-style: normal;
                             font-weight: 500;
@@ -648,6 +669,7 @@ header {
                             text-transform: uppercase;
                             font-family: var(--int);
                             color: #F00;
+                            display: block;
                         }
                     }
                 }
@@ -823,12 +845,13 @@ header {
                 height: 17px;
                 border: 1px solid #fff;
                 text-align: center;
-
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
 
                 span {
-                    position: absolute;
-                    top: -10%;
-                    left: 25%;
+                    text-align: center;
                     font-size: 16px;
                     font-style: normal;
                     font-weight: 500;
@@ -836,6 +859,7 @@ header {
                     text-transform: uppercase;
                     font-family: var(--int);
                     color: #F00;
+                    display: block;
                 }
             }
         }

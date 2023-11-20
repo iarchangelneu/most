@@ -10,20 +10,12 @@
         <div class="order__body">
             <div class="order__data">
                 <div>
-                    <label for="fio">ФИО</label>
-                    <input type="text" id="fio" name="fio">
-                </div>
-                <div>
-                    <label for="email">ЭЛЕКТРОННАЯ ПОЧТА</label>
-                    <input type="email" id="email" name="email">
-                </div>
-                <div>
                     <label for="adress">аДРЕС ДОСТАВКИ</label>
-                    <input type="text" id="adress" name="adress">
+                    <input type="text" id="adress" name="adress" v-model="adress">
                 </div>
                 <div>
                     <label for="comment">кОММЕНТАРИЙ</label>
-                    <textarea name="comment" id="comment" cols="30" rows="4"></textarea>
+                    <textarea name="comment" id="comment" cols="30" rows="4" v-model="comment"></textarea>
                 </div>
             </div>
 
@@ -31,36 +23,21 @@
                 <h2>СОСТАВ ЗАКАЗА</h2>
                 <div class="order__items--body">
                     <div class="items">
-                        <div class="item">
-                            <img src="@/assets/img/fav1.png" alt="">
-                        </div>
-                        <div class="item">
-                            <img src="@/assets/img/fav1.png" alt="">
-                        </div>
-                        <div class="item">
-                            <img src="@/assets/img/fav1.png" alt="">
-                        </div>
-                        <div class="item">
-                            <img src="@/assets/img/fav1.png" alt="">
-                        </div>
-                        <div class="item">
-                            <img src="@/assets/img/fav1.png" alt="">
-                        </div>
-                        <div class="item">
-                            <img src="@/assets/img/fav1.png" alt="">
+                        <div class="item" v-for="item in cart" :key="item.id">
+                            <img :src="pathUrl + '/api' + item.products.add_image[0].image">
                         </div>
                     </div>
 
                     <div class="total">
-                        <span>6 ТОВАРОВ</span>
-                        <span>154 896 ₸</span>
+                        <span>{{ cart.length }} ТОВАРОВ</span>
+                        <span>{{ formatPrice(calculateTotal()) }} ₸</span>
                     </div>
                 </div>
 
-                <div class="confirm">
+                <div class="confirm" @click="buyProduct()">
                     <NuxtLink>
                         <img src="@/assets/img/defaultbg.svg" class="bg" alt="">
-                        <span ref="complete">к оплате</span>
+                        <span ref="buyBtn">к оплате</span>
                         <img src="@/assets/img/next.svg">
                     </NuxtLink>
                 </div>
@@ -69,11 +46,93 @@
     </div>
 </template>
 <script>
+import global from '~/mixins/global';
+import axios from 'axios'
 export default {
+    mixins: [global],
     data() {
         return {
-
+            cart: [],
+            pathUrl: 'https://mostshop.kz',
+            adress: '',
+            comment: '',
         }
+    },
+    methods: {
+        buyProduct() {
+            const token = this.getAuthorizationCookie()
+            const path = `${this.pathUrl}/api/buyer/placed-basket`
+            axios.defaults.headers.common['Authorization'] = `Token ${token}`;
+            this.$refs.buyBtn.innerHTML = 'Оформляем'
+            axios
+                .get(path)
+                .then(response => {
+                    console.log(response)
+                    this.getCart()
+                    if (response.status == 204) {
+                        this.$refs.buyBtn.innerHTML = 'Недостаточно средств'
+                    }
+                    if (response.status == 201) {
+                        // this.getBuyer()
+                        this.$refs.buyBtn.innerHTML = 'Оплата прошла успешно'
+
+                        setTimeout(() => {
+                            window.location.href = '/completed'
+                        }, 3);
+                    }
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+
+        },
+        calculateTotal() {
+            let total = 0;
+
+            this.cart.forEach(item => {
+                const { price, discount } = item.products;
+                const discountedPrice = price * (1 - discount / 100);
+                total += discountedPrice * item.amount;
+            });
+
+            return total;
+        },
+        formatPrice(price) {
+            return Math.floor(price).toLocaleString();
+        },
+        deleteFromCart(id) {
+            const token = this.getAuthorizationCookie()
+            const csrf = this.getCSRFToken()
+            const path = `${this.pathUrl}/api/buyer/delete-product-basket/${id}`
+            axios.defaults.headers.common['Authorization'] = `Token ${token}`;
+            axios.defaults.headers.common['X-CSRFToken'] = csrf;
+            axios
+                .put(path)
+                .then(response => {
+                    console.log(response)
+                    this.getCart()
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+        },
+        getCart() {
+            const token = this.getAuthorizationCookie()
+            const path = `${this.pathUrl}/api/buyer/all-product-basket`;
+            axios.defaults.headers.common['Authorization'] = `Token ${token}`;
+
+            axios
+                .get(path)
+                .then(response => {
+                    this.cart = response.data
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+        },
+    },
+    mounted() {
+        this.getCart()
     }
 }
 </script>

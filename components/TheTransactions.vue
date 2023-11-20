@@ -1,5 +1,5 @@
 <template>
-    <div class="empty" v-if="!test">
+    <div class="empty" v-if="transactions.length <= 0">
         <div class="text-center">
             <h1>список операций будет доступен после пополнения средств</h1>
 
@@ -21,19 +21,14 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>Пополнение</td>
-                        <td>+ 8 000 ₸</td>
-                        <td>05.12.22 15:47</td>
-                        <td class="success">Совершено</td>
-                        <td>18 000 ₸</td>
-                    </tr>
-                    <tr>
-                        <td>Пополнение</td>
-                        <td>+ 8 000 ₸</td>
-                        <td>05.12.22 15:47</td>
-                        <td class="failure">Отменено</td>
-                        <td>18 000 ₸</td>
+                    <tr v-for="item in transactions" :key="item.id">
+                        <td>{{ item.type_operation }}</td>
+                        <td>{{ item.amount.toLocaleString() }} ₸</td>
+                        <td>{{ formatDate(item.date) }}</td>
+                        <td class="success" :class="{ success: item.paid == 1, failure: item.paid == 0 }">{{ item.paid == 1
+                            ? 'Совершено' :
+                            item.paid == 0 ? 'Отменено' : item.paid }}</td>
+                        <td>{{ Math.floor(item.amount_now).toLocaleString() }} ₸</td>
                     </tr>
                 </tbody>
             </table>
@@ -58,21 +53,22 @@
                     </div>
                 </div>
             </div>
-            <div class="mob__item">
+            <div class="mob__item" v-for="item in transactions" :key="item.id">
                 <div class="item__header">
-                    <span>Пополнение</span>
-                    <small>29.11.22 18:08</small>
-                    <img src="@/assets/img/failure.svg" alt="">
+                    <span>{{ item.type_operation }}</span>
+                    <small>{{ formatDate(item.date) }}</small>
+                    <img src="@/assets/img/success.svg" v-if="item.paid == 1" alt="">
+                    <img src="@/assets/img/failure.svg" v-else alt="">
                 </div>
 
                 <div class="item__body">
                     <div>
                         <span>Цена</span>
-                        <small>+ 18 000 ₸</small>
+                        <small>{{ item.amount.toLocaleString() }} ₸</small>
                     </div>
                     <div>
                         <span>Состояние счета</span>
-                        <small>10 000 ₸</small>
+                        <small>{{ Math.floor(item.amount_now).toLocaleString() }} ₸</small>
                     </div>
                 </div>
             </div>
@@ -81,10 +77,35 @@
 </template>
 <script>
 export default {
+    props: {
+        transactions: [],
+    },
     data() {
         return {
-            test: true,
+            test: false,
         }
+    },
+    methods: {
+        calculateAmountNow(item) {
+            if (item.type_operation === 'ВЫВОД' && item.paid === 0) {
+                return (item.amount_now + item.amount).toLocaleString();
+            } else if (item.type_operation === 'ПОПОЛНЕНИЕ' && item.paid === 0) {
+                return (item.amount_now - item.amount).toLocaleString();
+            } else {
+                return item.amount_now.toLocaleString();
+            }
+        },
+        formatDate(dateTime) {
+            const date = new Date(dateTime);
+
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = String(date.getFullYear()).slice(-2);
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+
+            return `${day}.${month}.${year} ${hours}:${minutes}`;
+        },
     }
 }
 </script>

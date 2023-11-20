@@ -4,7 +4,7 @@ export default {
     return {
       isAuth: false,
       accountUrl: "",
-      pathUrl: "https://studynow.kg",
+      pathUrl: "https://mostshop.kz",
       cart: [],
     };
   },
@@ -24,6 +24,46 @@ export default {
         })
         .catch((error) => console.log(error));
     },
+    addFav(id, size) {
+      const path = `${this.pathUrl}/api/buyer/add-product-favourites`;
+
+      axios
+          .post(path, { product: id, size: size })
+          .then((response) => {
+              console.log(response)
+          })
+          .catch((error) => {
+              console.log(error)
+          })
+  },
+  addToCart(id,size) {
+    const path = `${this.pathUrl}/api/buyer/add-product-basket`
+    const csrf = this.getCSRFToken()
+    axios.defaults.headers.common['X-CSRFToken'] = csrf;
+    axios
+        .post(path, {
+            products: id,
+            amount: 1,
+            size: size
+        })
+        .then(response => {
+            if (response.status == 201) {
+                // this.$refs.cartBtn.innerHTML = 'В Корзине'
+                // localStorage.setItem('length', 4)
+                // this.$refs.cartBtn.disabled = true
+                // this.$refs.cartBtn.classList.add('disabled')
+            }
+            else {
+                // this.$refs.cartBtn.innerHTML = 'Ошибка'
+                // this.$refs.cartBtn.disabled = false
+
+            }
+            console.log(response)
+        })
+        .catch(error => {
+            console.error(error)
+        })
+},
     getCart() {
       const token = this.getAuthorizationCookie();
       const path = `${this.pathUrl}/api/buyer/all-product-basket`;

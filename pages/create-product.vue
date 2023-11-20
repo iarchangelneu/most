@@ -9,14 +9,14 @@
                 </div>
                 <div>
                     <label for="name">Название товара:</label>
-                    <input type="text" placeholder="Введите название">
+                    <input type="text" placeholder="Введите название" v-model="name" ref="name">
                 </div>
 
                 <div>
                     <label for="category">Категория товара:</label>
 
                     <div class="category">
-                        <select v-model="selectedCategoryId" @change="updateSelectedCategory">
+                        <select v-model="selectedCategoryId" @change="updateSelectedCategory" ref="select">
                             <option value="" selected disabled>Выберите</option>
                             <option value="1">Верх</option>
                             <option value="2">Низ</option>
@@ -34,12 +34,13 @@
 
                 <div class="price">
                     <label for="price">Цена:</label>
-                    <input type="number" placeholder="Введите цену">
+                    <input type="number" placeholder="Введите цену" v-model="price">
                 </div>
 
                 <div>
                     <label for="material">Материал изделия:</label>
-                    <textarea name="material" id="material" cols="30" rows="6" placeholder="Введите данные"></textarea>
+                    <textarea name="material" id="material" cols="30" rows="6" placeholder="Введите данные"
+                        v-model="short_desc"></textarea>
                 </div>
 
                 <div>
@@ -105,14 +106,17 @@
                 </div>
 
                 <div class="publish">
-                    <button>Опубликовать</button>
+                    <button ref="createProduct" @click="submitForm">Опубликовать</button>
                 </div>
             </div>
         </div>
     </div>
 </template>
 <script>
+import global from '~/mixins/global';
+import axios from 'axios';
 export default {
+    mixins: [global],
     data() {
         return {
             selectedCategoryId: null,
@@ -122,6 +126,10 @@ export default {
             images: [],
             maxImages: 5,
             description: '',
+            short_desc: '',
+            name: '',
+            price: '',
+            pathUrl: "https://mostshop.kz",
         };
     },
     watch: {
@@ -132,6 +140,56 @@ export default {
         },
     },
     methods: {
+        async submitForm() {
+            const csrf = this.getCSRFToken()
+            if (this.name.length > 0) {
+                this.$refs.name.style.borderColor = '#000'
+
+                if (this.selectedCategoryId != null) {
+                    this.$refs.select.style.borderColor = '#000'
+                    const path = `${this.pathUrl}/api/seller/seller-lk/add-product/`
+                    const formData = new FormData();
+
+                    const filesToUpload = this.images
+                        .filter(item => item.file instanceof File)
+                        .map(item => item.file);
+
+
+                    formData.append('name', this.name);
+                    formData.append('category', this.selectedCategoryId);
+                    formData.append('price', this.price);
+                    formData.append('short_description', this.short_desc);
+                    formData.append('description', this.description);
+                    formData.append('size', this.sizes);
+                    filesToUpload.forEach(file => {
+                        formData.append('add_image', file);
+                    });
+                    this.$refs.createProduct.disabled = true
+                    this.$refs.createProduct.innerHTML = 'СОЗДАЕМ ЗАКАЗ'
+
+                    try {
+                        axios.defaults.headers.common['X-CSRFToken'] = csrf;
+                        axios.defaults.headers.post['Content-Type'] = 'multipart/form-data';
+                        const response = await axios.post(path, formData);
+                        console.log('Форма успешно отправлена', response);
+                        if (response.status == 201) {
+                            this.$refs.createProduct.innerHTML = 'Заказ успешно создан!'
+                        }
+                    } catch (error) {
+                        console.error('Ошибка при отправке формы', error);
+                        this.$refs.createProduct.disabled = false
+                        this.$refs.createProduct.innerHTML = 'Ошибка при создании заказа'
+                    }
+                }
+                else {
+                    this.$refs.select.style.borderColor = 'red'
+                }
+            }
+            else {
+                this.$refs.name.style.borderColor = 'red'
+            }
+
+        },
         openFileInput() {
             this.$refs.fileInput.click();
         },
@@ -365,6 +423,10 @@ useSeoMeta({
             gap: 30px;
             position: relative;
 
+            @media (max-width: 1600px) {
+                max-width: 35vw;
+            }
+
             @media (max-width: 1024px) {
                 max-width: 100%;
             }
@@ -387,7 +449,8 @@ useSeoMeta({
                 margin-top: 30px;
                 display: flex;
                 align-items: flex-start;
-                gap: 30px;
+                flex-wrap: wrap;
+                gap: 15px 30px;
 
                 div {
                     display: flex;

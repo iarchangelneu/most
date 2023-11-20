@@ -1,29 +1,19 @@
 <template>
-    <div class="page">
+    <div v-if="product.length <= 0"></div>
+    <div class="page" v-else>
         <prevPage></prevPage>
 
         <div class="product">
             <div class="gallery">
 
                 <div class="main__image">
-                    <img src="@/assets/img/pr1.png" alt="">
+                    <img :src="mainImage" alt="">
                 </div>
 
                 <div class="image__picker">
-
-                    <div class="picker__block">
-                        <img src="@/assets/img/pr2.png" alt="">
+                    <div class="picker__block" v-for="item in filteredImages">
+                        <img :key="item.id" :src="item.image" @click="changeMainImage(item.image)">
                     </div>
-                    <div class="picker__block">
-                        <img src="@/assets/img/pr2.png" alt="">
-                    </div>
-                    <div class="picker__block">
-                        <img src="@/assets/img/pr2.png" alt="">
-                    </div>
-                    <div class="picker__block">
-                        <img src="@/assets/img/pop5.png" alt="">
-                    </div>
-
                 </div>
             </div>
 
@@ -31,28 +21,28 @@
 
                 <div class="name__author">
                     <div class="name">
-                        <h1>Джинсы «Fases»</h1>
-                        <span>34 555 ₸</span>
+                        <h1>{{ product.name }}</h1>
+                        <span>{{ product.price.toLocaleString() }} ₸</span>
 
                         <div class="sizes">
-                            <button v-for="size in sizes" :key="size.id" @click="selectSize(size)">
+                            <button v-for="size in product.size.split(',')" :key="size.id" @click="select(size)">
                                 <img v-show="selectedSize === size" src="@/assets/img/picked.svg" alt="">
-                                {{ size.label }}
+                                {{ size }}
                             </button>
                         </div>
                     </div>
                     <div class="author">
                         <div>
                             <h2>Продавец:</h2>
-                            <NuxtLink :to="'/author/' + 1">Рыскулова Айжан</NuxtLink>
+                            <NuxtLink :to="'/author/' + product.seller.pk">{{ seller.first_name }}</NuxtLink>
                         </div>
                         <div>
                             <h2>Категория:</h2>
-                            <span>Низ</span>
+                            <span>{{ product.category.category_name }}</span>
                         </div>
                         <div>
                             <h2>Материал:</h2>
-                            <span>Полиэстер 70%, хлопок 30%, гипоаллергенные краски</span>
+                            <span>{{ product.short_description }}</span>
                         </div>
                     </div>
                 </div>
@@ -60,11 +50,11 @@
                 <div class="description">
                     <h2>Описание:</h2>
 
-                    <div v-html="description" class="desc"></div>
+                    <div v-html="product.description" class="desc"></div>
 
                     <div class="buttons">
-                        <button>В корзину</button>
-                        <button><img src="@/assets/img/tofav.svg" alt=""></button>
+                        <button @click="addToCart(productId, selectedSize)" ref="cartBtn">В корзину</button>
+                        <button @click="addFav(productId, selectedSize)"><img src="@/assets/img/tofav.svg" alt=""></button>
                     </div>
                 </div>
 
@@ -75,88 +65,25 @@
             <h1>похожие товары</h1>
 
             <div class="catalog">
-                <NuxtLink :to="'/product/' + 1" class="catalog__item">
+                <NuxtLink v-for="item in product.similar_products" :to="'/product/' + item.id" :key="item.id"
+                    class="catalog__item">
                     <div class="img">
                         <div class="item__adv">
                             <div class="buttons">
-                                <img src="@/assets/img/addcart.svg" alt="">
-                                <img src="@/assets/img/addfav.svg" alt="">
+                                <button @click.prevent="addFav(item.id)">
+                                    <img src="@/assets/img/addcart.svg" alt="">
+                                </button>
+                                <button @click.prevent="addFav(item.id, item.size.split(',')[0])">
+                                    <img src="@/assets/img/addfav.svg" alt="">
+                                </button>
                             </div>
                         </div>
-                        <img src="@/assets/img/pop1.png" alt="">
+                        <img :src="item.main_image" alt="">
                     </div>
-                    <p>Джинсы «Fases»</p>
+                    <p>{{ item.name }}</p>
 
                     <div class="text-right">
-                        <span> 34 555 ₸</span>
-                    </div>
-                </NuxtLink>
-                <NuxtLink :to="'/product/' + 1" class="catalog__item">
-                    <div class="img">
-                        <div class="item__adv">
-                            <div class="buttons">
-                                <img src="@/assets/img/addcart.svg" alt="">
-                                <img src="@/assets/img/addfav.svg" alt="">
-                            </div>
-                        </div>
-                        <img src="@/assets/img/pop2.png" alt="">
-                    </div>
-
-                    <p>Кроссовки «Say Yes»</p>
-
-                    <div class="text-right">
-                        <span> 57 999 ₸</span>
-                    </div>
-                </NuxtLink>
-                <NuxtLink :to="'/product/' + 1" class="catalog__item">
-                    <div class="img">
-                        <div class="item__adv">
-                            <div class="buttons">
-                                <img src="@/assets/img/addcart.svg" alt="">
-                                <img src="@/assets/img/addfav.svg" alt="">
-                            </div>
-                        </div>
-                        <img src="@/assets/img/pop3.png" alt="">
-                    </div>
-
-                    <p>Куртка «JO»</p>
-
-                    <div class="text-right">
-                        <span> 122 940 ₸</span>
-                    </div>
-                </NuxtLink>
-                <NuxtLink :to="'/product/' + 1" class="catalog__item">
-                    <div class="img">
-                        <div class="item__adv">
-                            <div class="buttons">
-                                <img src="@/assets/img/addcart.svg" alt="">
-                                <img src="@/assets/img/addfav.svg" alt="">
-                            </div>
-                        </div>
-                        <img src="@/assets/img/pop4.png" alt="">
-                    </div>
-
-                    <p>Топ «KRASIVO»</p>
-
-                    <div class="text-right">
-                        <span> 31 550 ₸</span>
-                    </div>
-                </NuxtLink>
-                <NuxtLink :to="'/product/' + 1" class="catalog__item">
-                    <div class="img">
-                        <div class="item__adv">
-                            <div class="buttons">
-                                <img src="@/assets/img/addcart.svg" alt="">
-                                <img src="@/assets/img/addfav.svg" alt="">
-                            </div>
-                        </div>
-                        <img src="@/assets/img/pop5.png" alt="">
-                    </div>
-
-                    <p>Рубашка «Art»</p>
-
-                    <div class="text-right">
-                        <span> 18 370 ₸</span>
+                        <span> {{ item.price.toLocaleString() }} ₸</span>
                     </div>
                 </NuxtLink>
             </div>
@@ -164,7 +91,10 @@
     </div>
 </template>
 <script>
+import global from '~/mixins/global';
+import axios from 'axios';
 export default {
+    mixins: [global],
     data() {
         return {
             sizes: [
@@ -174,16 +104,69 @@ export default {
                 { id: 4, label: 'XL' },
             ],
             selectedSize: null,
+            pathUrl: "https://mostshop.kz",
+            productId: this.$route.params.id,
+            product: [],
+            seller: [],
+            category: [],
+            populars: [],
+            mainImage: "",
+            filteredImages: [],
             description: 'Наши джинсы с рисунком лиц — это тот фокус, который добавит интереса в твой гардероб! Каждая пара придаёт тебе стиль.Комфортные в носке, рисунок не стирается при стирке. Эти джинсы — твой секрет для стильного образа <br><br> Наши джинсы с рисунком лиц — это тот фокус, который добавит интереса в твой гардероб! Каждая пара придаёт тебе стиль.Комфортные в носке, рисунок не стирается при стирке. Эти джинсы — твой секрет для стильного образ. Наши джинсы с рисунком лиц — это тот фокус, который добавит интереса в твой гардероб! Каждая пара придаёт тебе стиль.Комфортные в носке, рисунок не стирается при стирке. Эти джинсы — твой секрет для стильного образа <br> <br> Наши джинсы с рисунком лиц — это тот фокус, который добавит интереса в твой гардероб! Каждая пара придаёт тебе стиль.Комфортные в носке, рисунок не стирается при стирке. Эти джинсы — твой секрет для стильного образа. Наши джинсы с рисунком лиц — это тот фокус, который добавит интереса в твой гардероб! ',
         }
     },
+    computed: {
+        filteredImages() {
+            return this.product.add_image;
+        }
+    },
+    watch: {
+        product: {
+            handler(newVal, oldVal) {
+                if (newVal && newVal.add_image) {
+                    this.mainImage = newVal.add_image[0].image;
+                    this.filteredImages = newVal.add_image;
+                }
+            },
+            deep: true
+        }
+    },
     methods: {
-        selectSize(size) {
+        changeMainImage(newImage) {
+            this.mainImage = newImage;
+        },
+        getProduct() {
+            const path = `${this.pathUrl}/api/products/detail-product/${this.productId}`
+            axios
+                .get(path)
+                .then(response => {
+                    this.product = response.data;
+                    this.seller = response.data.seller.user;
+                    this.rating = response.data.seller.rating;
+                    this.category = response.data.category.category_name;
+                    this.count = response.data.seller.amount_products;
+
+                    // Вызываем selectSize после загрузки данных
+                    this.selectSize();
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        },
+        selectSize() {
+            // Проверяем, есть ли размеры и selectedSize еще не установлен
+            if (this.product.size && !this.selectedSize) {
+                const sizes = this.product.size.split(',');
+                this.selectedSize = sizes[0];
+            }
+        },
+        select(size) {
             this.selectedSize = size === this.selectedSize ? null : size;
         },
     },
     mounted() {
-        this.selectedSize = this.sizes[0];
+        this.getProduct()
+
     },
 }
 </script>
@@ -269,6 +252,11 @@ useSeoMeta({
                     .buttons {
                         display: flex;
                         gap: 60px;
+
+                        button {
+                            background: transparent;
+                            border: 0;
+                        }
 
                         @media (max-width:1024px) {
                             gap: 20px;
@@ -519,10 +507,14 @@ useSeoMeta({
 
 
                 img {
-                    width: 27.865vw;
+                    width: 535px;
                     height: 580px;
                     object-fit: cover;
                     cursor: pointer;
+
+                    @media (max-width: 1200px) {
+                        width: 400px;
+                    }
 
                     @media (max-width: 1024px) {
                         width: 100%;

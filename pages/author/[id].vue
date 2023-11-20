@@ -1,20 +1,21 @@
 <template>
-    <div class="page">
+    <div v-if="author.length <= 0"></div>
+    <div class="page" v-else>
         <prevPage></prevPage>
 
         <div class="author">
             <div class="avatar">
-                <img src="@/assets/img/bigava.png" alt="">
+                <img :src="author.user.photo" alt="">
             </div>
 
             <div class="description">
                 <h1>
-                    рыскулова айжан
+                    {{ author.user.first_name }}
                     <img src="@/assets/img/flower.svg" alt="">
                 </h1>
 
                 <h2>Обо мне:</h2>
-                <div class="desc" v-html="description"></div>
+                <div class="desc" v-html="author.description"></div>
             </div>
         </div>
 
@@ -23,88 +24,24 @@
             <h1>товары продавца:</h1>
 
             <div class="catalog">
-                <NuxtLink :to="'/product/' + 1" class="catalog__item">
+                <NuxtLink v-for="item in products" :to="'/product/' + item.id" :key="item.id" class="catalog__item">
                     <div class="img">
                         <div class="item__adv">
                             <div class="buttons">
-                                <img src="@/assets/img/addcart.svg" alt="">
-                                <img src="@/assets/img/addfav.svg" alt="">
+                                <button @click.prevent="addFav(item.id)">
+                                    <img src="@/assets/img/addcart.svg" alt="">
+                                </button>
+                                <button @click.prevent="addFav(item.id, item.size.split(',')[0])">
+                                    <img src="@/assets/img/addfav.svg" alt="">
+                                </button>
                             </div>
                         </div>
-                        <img src="@/assets/img/pop1.png" alt="">
+                        <img :src="item.add_image[0].image" alt="">
                     </div>
-                    <p>Джинсы «Fases»</p>
+                    <p>{{ item.name }}</p>
 
                     <div class="text-right">
-                        <span> 34 555 ₸</span>
-                    </div>
-                </NuxtLink>
-                <NuxtLink :to="'/product/' + 1" class="catalog__item">
-                    <div class="img">
-                        <div class="item__adv">
-                            <div class="buttons">
-                                <img src="@/assets/img/addcart.svg" alt="">
-                                <img src="@/assets/img/addfav.svg" alt="">
-                            </div>
-                        </div>
-                        <img src="@/assets/img/pop2.png" alt="">
-                    </div>
-
-                    <p>Кроссовки «Say Yes»</p>
-
-                    <div class="text-right">
-                        <span> 57 999 ₸</span>
-                    </div>
-                </NuxtLink>
-                <NuxtLink :to="'/product/' + 1" class="catalog__item">
-                    <div class="img">
-                        <div class="item__adv">
-                            <div class="buttons">
-                                <img src="@/assets/img/addcart.svg" alt="">
-                                <img src="@/assets/img/addfav.svg" alt="">
-                            </div>
-                        </div>
-                        <img src="@/assets/img/pop3.png" alt="">
-                    </div>
-
-                    <p>Куртка «JO»</p>
-
-                    <div class="text-right">
-                        <span> 122 940 ₸</span>
-                    </div>
-                </NuxtLink>
-                <NuxtLink :to="'/product/' + 1" class="catalog__item">
-                    <div class="img">
-                        <div class="item__adv">
-                            <div class="buttons">
-                                <img src="@/assets/img/addcart.svg" alt="">
-                                <img src="@/assets/img/addfav.svg" alt="">
-                            </div>
-                        </div>
-                        <img src="@/assets/img/pop4.png" alt="">
-                    </div>
-
-                    <p>Топ «KRASIVO»</p>
-
-                    <div class="text-right">
-                        <span> 31 550 ₸</span>
-                    </div>
-                </NuxtLink>
-                <NuxtLink :to="'/product/' + 1" class="catalog__item">
-                    <div class="img">
-                        <div class="item__adv">
-                            <div class="buttons">
-                                <img src="@/assets/img/addcart.svg" alt="">
-                                <img src="@/assets/img/addfav.svg" alt="">
-                            </div>
-                        </div>
-                        <img src="@/assets/img/pop5.png" alt="">
-                    </div>
-
-                    <p>Рубашка «Art»</p>
-
-                    <div class="text-right">
-                        <span> 18 370 ₸</span>
+                        <span> {{ item.price.toLocaleString() }} ₸</span>
                     </div>
                 </NuxtLink>
             </div>
@@ -112,11 +49,36 @@
     </div>
 </template>
 <script>
+import global from '~/mixins/global';
+import axios from 'axios';
 export default {
+    mixins: [global],
     data() {
         return {
+            productId: this.$route.params.id,
+            author: [],
+            products: [],
+            pathUrl: 'https:/mostshop.kz',
             description: 'Привет, меня зовут Айжан Рыскулова, и я — творческий дух, воплощающий свой стиль через одежду. Моя миссия — помочь вам выразить индивидуальность через моду, и создать уникальные образы, которые отражают ваш характер и внутренний мир. <br> <br> Мои творения — это искусство, выраженное через текстиль. Каждая деталь, каждая ткань и каждый шов тщательно продуманы, чтобы придать вам уверенность и комфорт. Я работаю с разнообразными материалами, цветами и фактурами, чтобы создать уникальные наряды, которые подчёркивают ваш стиль. <br> <br> Будь то повседневная одежда, наряд для особого случая или что‑то между ними, я готова воплотить ваши мечты в реальность. Моя цель — сделать вашу одежду неотъемлемой частью вашей личности. <br><br> Покупая мои изделия, вы получаете не просто одежду, а часть меня и моего вдохновения. Всех обнимаю!'
         }
+    },
+    methods: {
+        getAuthor() {
+            const path = `${this.pathUrl}/api/seller/seller-this/${this.productId}`
+            axios
+                .get(path)
+                .then(response => {
+                    this.author = response.data
+                    this.products = response.data.products
+
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+        }
+    },
+    mounted() {
+        this.getAuthor()
     }
 }
 </script>
@@ -209,6 +171,11 @@ useSeoMeta({
 
                         @media (max-width:1024px) {
                             gap: 20px;
+                        }
+
+                        button {
+                            background: transparent;
+                            border: 0;
                         }
 
                         img {
